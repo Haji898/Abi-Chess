@@ -1,0 +1,1117 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Abi Chess</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,-apple-system,sans-serif}
+body{background:#0a0a0a;color:#eee;min-height:100vh;display:flex;flex-direction:column}
+header{background:#18181b;border-bottom:1px solid #27272a;padding:12px 16px;display:flex;justify-content:space-between;align-items:center}
+.logo{display:flex;gap:10px;align-items:center}
+.logo-icon{width:36px;height:36px;background:#fbbf24;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:900;color:#000}
+.title{font-weight:900;font-size:14px;letter-spacing:-0.02em}
+.sub{font-size:10px;color:#a1a1aa;font-family:monospace}
+.badge{padding:6px 10px;border-radius:999px;font-size:10px;font-family:monospace;font-weight:700}
+.badge-ok{background:#10b98122;border:1px solid #10b98155;color:#34d399}
+.main{max-width:1100px;width:100%;margin:0 auto;padding:16px;display:grid;grid-template-columns:1fr 360px;gap:20px;flex:1}
+@media(max-width:900px){.main{grid-template-columns:1fr}}
+.board-wrap{display:flex;flex-direction:column;align-items:center;gap:12px}
+.status{padding:10px 16px;border-radius:999px;font-weight:800;font-size:13px;display:flex;align-items:center;gap:8px}
+.status-you{background:#10b98122;border:1px solid #10b98144;color:#6ee7b7}
+.status-think{background:#ef444422;border:1px solid #ef444455;color:#fca5a5;animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.7}}
+.board{width:100%;max-width:560px;aspect-ratio:1/1;background:#f0d9b5;border-radius:16px;overflow:hidden;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);border:2px solid #27272a;box-shadow:0 20px 60px rgba(0,0,0,0.5);position:relative}
+.sq{position:relative;display:flex;align-items:center;justify-content:center;cursor:pointer;user-select:none}
+.sq.light{background:#f0d9b5}
+.sq.dark{background:#b58863}
+.sq.sel.light{background:#a9d18e !important}
+.sq.sel.dark{background:#7ab85e !important}
+.sq.last.light{background:#f7f769 !important}
+.sq.last.dark{background:#d9c14d !important}
+.sq.check{background:#ef4444 !important}
+.piece{font-size:40px;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,0.5))}
+.piece.w{color:#fff;text-shadow:0 0 0 #000, 0 1px 0 #000, 0 2px 4px rgba(0,0,0,0.8)}
+.piece.b{color:#111}
+.dot{width:14px;height:14px;background:rgba(0,0,0,0.35);border-radius:50%;border:2px solid rgba(255,255,255,0.4)}
+.cap{position:absolute;inset:4px;border:3px solid #ef4444cc;border-radius:8px;pointer-events:none}
+.coord{position:absolute;font-size:9px;font-weight:700;opacity:0.6;font-family:monospace}
+.coord.file{bottom:1px;right:2px}
+.coord.rank{top:1px;left:2px}
+.controls{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.btn{padding:10px 18px;border-radius:12px;font-weight:700;font-size:13px;border:none;cursor:pointer}
+.btn-primary{background:#fff;color:#000}
+.btn-sec{background:#27272a;color:#eee;border:1px solid #3f3f46}
+.panel{background:#18181b;border:1px solid #27272a;border-radius:18px;padding:16px}
+.panel h3{font-size:11px;letter-spacing:0.15em;color:#a1a1aa;font-weight:900;margin-bottom:12px}
+.level{padding:10px 12px;border-radius:12px;border:1px solid #27272a;background:#27272a80;display:flex;justify-content:space-between;align-items:center;cursor:pointer;margin-bottom:8px;transition:0.15s}
+.level.active{background:#27272a;border-color:#fbbf24;box-shadow:0 0 0 1px #fbbf24aa}
+.level-name{font-weight:800;font-size:13px}
+.level-desc{font-size:10px;color:#a1a1aa;font-family:monospace}
+.level-time{font-size:10px;padding:4px 8px;border-radius:999px;background:#3f3f46;font-family:monospace}
+.level.active .level-time{background:#fbbf24;color:#000}
+.think-overlay{position:absolute;inset:0;background:rgba(0,0,0,0.75);border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;z-index:10}
+.hidden{display:none !important}
+.spinner{width:44px;height:44px;border:4px solid #fbbf24;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.count{font-size:36px;font-weight:900;font-family:monospace}
+.bar{width:200px;height:6px;background:#3f3f46;border-radius:999px;overflow:hidden}
+.bar-fill{height:100%;background:#fbbf24;transition:width 0.1s}
+.log{background:#09090b;border:1px solid #27272a;border-radius:12px;padding:10px;font-family:monospace;font-size:11px;color:#a1a1aa;max-height:120px;overflow-y:auto;white-space:pre-wrap}
+.color-pick{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.color-btn{padding:12px;border-radius:12px;font-weight:800;border:2px solid #27272a;cursor:pointer}
+.color-btn.active{border-color:#fbbf24;background:#fff;color:#000}
+.color-btn:not(.active){background:#27272a;color:#a1a1aa}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">
+    <div class="logo-icon">♞</div>
+    <div><div class="title">ABI CHESS</div><div class="sub">Abi Chess • perlu internet untuk engine Stockfish</div></div>
+  </div>
+  <div class="badge badge-ok">● TOURNAMENT MODE</div>
+</header>
+
+<div class="main">
+  <div class="board-wrap">
+    <div style="display:flex;gap:8px;align-items:center;width:100%;max-width:560px;justify-content:space-between">
+      <div id="turn" class="status status-you"><span style="width:8px;height:8px;background:#10b981;border-radius:50%;display:inline-block"></span> GILIRAN ANDA</div>
+      <div id="eval" style="padding:8px 12px;background:#27272a;border-radius:999px;font-family:monospace;font-size:12px;border:1px solid #3f3f46">Eval: 0.0</div>
+    </div>
+
+    <div style="position:relative;width:100%;max-width:560px">
+      <div id="board" class="board"></div>
+      <div id="thinkOver" class="think-overlay hidden">
+        <div class="spinner"></div>
+        <div id="thinkTitle" style="font-weight:900;color:#fde68a">GRANDMASTER MIKIR...</div>
+        <div id="countdown" class="count">5.0s</div>
+        <div id="thinkSub" style="font-size:11px;color:#a1a1aa;font-family:monospace;text-align:center">Iterative deepening • target depth 100</div>
+        <div class="bar"><div id="prog" class="bar-fill" style="width:100%"></div></div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="btn btn-primary" onclick="newGame()">Permainan Baru</button>
+      <button class="btn btn-sec" onclick="undo()">↶ Undo</button>
+      <button class="btn btn-sec" onclick="redo()">↷ Redo</button>
+      <button class="btn btn-sec" onclick="flip()">Balik Papan</button>
+    </div>
+
+    <div id="log" class="log" style="width:100%;max-width:560px">Log: Siap main. Ini versi tanpa CDN, 100% jalan offline. Klik bidak putih untuk mulai.
+</div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div class="panel" style="border-color:#fbbf2444">
+      <h3>MODE TURNAMEN</h3>
+      <label for="playMode" style="display:block;color:#a1a1aa;font-size:11px;margin:0 0 6px">Mode pertandingan</label>
+      <select id="playMode" onchange="changeTournamentMode(this.value)" style="width:100%;padding:11px;border-radius:10px;background:#09090b;color:#eee;border:1px solid #3f3f46;margin-bottom:10px">
+        <option value="local">Main sendiri vs mesin Abi Chess</option>
+        <option value="human">Anda vs Stockfish 19</option>
+        <option value="match">Abi Chess vs Stockfish 19 (otomatis)</option>
+      </select>
+      <label for="sfBuild" style="display:block;color:#a1a1aa;font-size:11px;margin:0 0 6px">Engine Stockfish</label>
+      <select id="sfBuild" onchange="changeStockfishBuild(this.value)" style="width:100%;padding:11px;border-radius:10px;background:#09090b;color:#eee;border:1px solid #3f3f46;margin-bottom:10px">
+        <option value="lite">Stockfish 19 Lite • disarankan HP (~1,7 MB)</option>
+        <option value="full">Stockfish 19 Full • lebih berat (~94 MB)</option>
+      </select>
+      <div class="controls" style="justify-content:stretch">
+        <button class="btn btn-primary" style="flex:1" onclick="startTournamentMatch()">Mulai pertandingan</button>
+        <button class="btn btn-sec" style="flex:1" onclick="stopTournamentMatch()">Hentikan</button>
+      </div>
+      <div id="sfStatus" style="margin-top:10px;padding:10px;background:#09090b;border:1px solid #27272a;border-radius:10px;color:#fbbf24;font-size:11px;line-height:1.5">Stockfish belum dimuat. Pilih mode turnamen lalu tekan Mulai pertandingan.</div>
+      <div style="font-size:10px;color:#a1a1aa;margin-top:8px;line-height:1.5">Mode otomatis: Abi Chess bermain putih, Stockfish hitam. Gunakan Lite untuk mengurangi beban HP. Engine diunduh dari CDN saat dibutuhkan.</div>
+    </div>
+
+    <div class="panel">
+      <h3>PILIH WARNA</h3>
+      <div class="color-pick">
+        <button id="cw" class="color-btn active" onclick="setColor('w')">Putih</button>
+        <button id="cb" class="color-btn" onclick="setColor('b')">Hitam</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>TINGKAT KEKUATAN MESIN</h3>
+      <div id="levels"></div>
+      <div style="margin-top:12px;padding:10px;background:#09090b;border-radius:12px;border:1px solid #27272a;font-family:monospace;font-size:10px">
+        <div style="display:flex;justify-content:space-between"><span style="color:#71717a">Mesin</span><span style="color:#e4e4e7">Iterative Deepening + Alpha-Beta</span></div>
+        <div style="display:flex;justify-content:space-between;margin-top:4px"><span style="color:#71717a">Mode</span><span style="color:#34d399">Abi Chess / Stockfish 19</span></div>
+        <div style="display:flex;justify-content:space-between;margin-top:4px"><span style="color:#71717a">Catatan</span><span style="color:#fbbf24">Tidak dijamin tak terkalahkan</span></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>STATUS</h3>
+      <div id="stat" style="background:#09090b;border:1px solid #27272a;border-radius:12px;padding:12px;font-family:monospace;font-size:11px;color:#fde68a;min-height:60px">Pilih mode di atas untuk bermain melawan Stockfish 19 atau menjalankan pertandingan mesin otomatis. Koneksi internet diperlukan untuk memuat engine Stockfish.</div>
+    </div>
+
+    <div class="panel" style="border-color:#10b98144;background:#10b98111;text-align:center">
+      <div style="font-size:11px;font-weight:800;color:#6ee7b7">ARENA UJI MESIN</div>
+      <div style="font-size:10px;color:#a1a1aa;margin-top:4px">Bandingkan mesin Abi Chess dengan Stockfish 19. Hasil pertandingan dicatat di log; satu atau beberapa partai belum cukup untuk menilai kekuatan secara pasti.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ====== CATUR ENGINE MURNI TANPA DEPENDENCY ======
+const PIECES = {p:100,n:320,b:330,r:500,q:900,k:20000};
+const FILES = ['a','b','c','d','e','f','g','h'];
+
+let board = [];
+let turn = 'w';
+let castling = {wK:true,wQ:true,bK:true,bQ:true};
+let enPassant = null;
+let history = [];
+let playerColor = 'w';
+let flipped = false;
+let selected = null;
+let legalMoves = [];
+let thinking = false;
+let curLevel = 3;
+let moveHistory = [];
+let undoStack = [];
+let redoStack = [];
+let isRedoing = false;
+let repetitionCounts = new Map();
+let pendingEngineTimer = null;
+let gameOver = false;
+let tournamentMode = 'local';
+let stockfishWorker = null;
+let stockfishReady = false;
+let stockfishBusy = false;
+let stockfishBuild = 'lite';
+let stockfishPending = null;
+let stockfishLastInfo = '';
+let tournamentStopped = false;
+let matchStats = {w:0,d:0,l:0,games:0};
+
+const LEVELS = [
+  {name:"Pemula", mt:350, depth:1, desc:"Depth 1 • Santai", blunder:0.45},
+  {name:"Menengah", mt:700, depth:2, desc:"Depth 2 • Taktik dasar", blunder:0.12},
+  {name:"Mahir", mt:1200, depth:2, desc:"Depth 2 • Lebih akurat", blunder:0},
+  {name:"Expert", mt:1800, depth:3, desc:"Depth 3 • Alpha-beta", blunder:0},
+  {name:"Grandmaster", mt:2500, depth:3, desc:"Depth 3 • Pencarian taktis", blunder:0},
+  {name:"Grandmaster+", mt:3500, depth:4, desc:"Depth 4 • Quiescence", blunder:0},
+  {name:"Master Elite", mt:4500, depth:4, desc:"Depth 4 • Mode kuat", blunder:0},
+  {name:"Engine Pro", mt:5000, depth:5, desc:"Target depth 5 • Analisis lebih kuat", blunder:0},
+  {name:"ULTIMATE 100", mt:10000, depth:100, desc:"Target depth 100 ply • Iterative deepening + batas waktu", blunder:0}
+];
+
+function log(t){
+  const el=document.getElementById("log");
+  const time=new Date().toLocaleTimeString();
+  el.textContent = time + " - " + t + "\n" + el.textContent;
+}
+
+function initBoard(){
+  board = [
+    [{t:'r',c:'b'},{t:'n',c:'b'},{t:'b',c:'b'},{t:'q',c:'b'},{t:'k',c:'b'},{t:'b',c:'b'},{t:'n',c:'b'},{t:'r',c:'b'}],
+    [{t:'p',c:'b'},{t:'p',c:'b'},{t:'p',c:'b'},{t:'p',c:'b'},{t:'p',c:'b'},{t:'p',c:'b'},{t:'p',c:'b'},{t:'p',c:'b'}],
+    [null,null,null,null,null,null,null,null],
+    [null,null,null,null,null,null,null,null],
+    [null,null,null,null,null,null,null,null],
+    [null,null,null,null,null,null,null,null],
+    [{t:'p',c:'w'},{t:'p',c:'w'},{t:'p',c:'w'},{t:'p',c:'w'},{t:'p',c:'w'},{t:'p',c:'w'},{t:'p',c:'w'},{t:'p',c:'w'}],
+    [{t:'r',c:'w'},{t:'n',c:'w'},{t:'b',c:'w'},{t:'q',c:'w'},{t:'k',c:'w'},{t:'b',c:'w'},{t:'n',c:'w'},{t:'r',c:'w'}],
+  ];
+  turn='w';
+  castling={wK:true,wQ:true,bK:true,bQ:true};
+  enPassant=null;
+  history=[];
+  moveHistory=[];
+  undoStack=[];
+  redoStack=[];
+  isRedoing=false;
+  repetitionCounts = new Map();
+  repetitionCounts.set(positionKey(), 1);
+}
+
+function positionKey(){
+  const cells = board.map(row=>row.map(p=>p ? p.c+p.t : '..').join('')).join('/');
+  const rights = ['wK','wQ','bK','bQ'].filter(k=>castling[k]).join('') || '-';
+  const ep = enPassant ? FILES[enPassant.c]+(8-enPassant.r) : '-';
+  return cells+' '+turn+' '+rights+' '+ep;
+}
+
+function inBoard(r,c){ return r>=0&&r<8&&c>=0&&c<8; }
+
+function findKing(color){
+  for(let r=0;r<8;r++) for(let c=0;c<8;c++){
+    const p=board[r][c];
+    if(p && p.t==='k' && p.c===color) return {r,c};
+  }
+  return null;
+}
+
+function isAttacked(r,c, byColor){
+  // by pawns
+  const dir = byColor==='w' ? -1 : 1;
+  // Actually pawn attacks: white pawn moves up (r decreases), so white attacks from r+1
+  for(let dc of [-1,1]){
+    let rr = r + (byColor==='w' ? 1 : -1);
+    let cc = c + dc;
+    if(inBoard(rr,cc)){
+      const p=board[rr][cc];
+      if(p && p.c===byColor && p.t==='p') return true;
+    }
+  }
+  // knights
+  const kn=[[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
+  for(let [dr,dc] of kn){
+    let rr=r+dr, cc=c+dc;
+    if(inBoard(rr,cc)){
+      const p=board[rr][cc];
+      if(p && p.c===byColor && p.t==='n') return true;
+    }
+  }
+  // bishops/queen diagonal, rooks/queen straight, king
+  const dirs=[[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[-1,1],[1,-1],[1,1]];
+  for(let [dr,dc] of dirs){
+    for(let d=1; d<8; d++){
+      let rr=r+dr*d, cc=c+dc*d;
+      if(!inBoard(rr,cc)) break;
+      const p=board[rr][cc];
+      if(!p) continue;
+      if(p.c!==byColor){
+        // blocked by opponent but not attacker? actually blocked
+        break;
+      }
+      // attacker found
+      if(d===1 && p.t==='k') return true;
+      if((dr===0 || dc===0) && (p.t==='r' || p.t==='q')) return true;
+      if((dr!==0 && dc!==0) && (p.t==='b' || p.t==='q')) return true;
+      break;
+    }
+  }
+  return false;
+}
+
+function genPseudoMoves(r,c){
+  const p=board[r][c];
+  if(!p) return [];
+  const moves=[];
+  const color=p.c;
+  const opp = color==='w'?'b':'w';
+  
+  if(p.t==='p'){
+    const dir = color==='w' ? -1 : 1;
+    const startRow = color==='w' ? 6 : 1;
+    // forward
+    if(inBoard(r+dir,c) && !board[r+dir][c]){
+      // promotion
+      if(r+dir===0 || r+dir===7) {
+        for(let promo of ['q','r','b','n']) moves.push({from:{r,c},to:{r:r+dir,c}, promo});
+      } else {
+        moves.push({from:{r,c},to:{r:r+dir,c}});
+      }
+      if(r===startRow && inBoard(r+dir*2,c) && !board[r+dir*2][c]){
+        moves.push({from:{r,c},to:{r:r+dir*2,c}, double:true});
+      }
+    }
+    // captures
+    for(let dc of [-1,1]){
+      if(inBoard(r+dir,c+dc)){
+        const target=board[r+dir][c+dc];
+        if(target && target.c===opp){
+          if(r+dir===0 || r+dir===7){
+            for(let promo of ['q','r','b','n']) moves.push({from:{r,c},to:{r:r+dir,c:c+dc}, promo, capture:true});
+          } else {
+            moves.push({from:{r,c},to:{r:r+dir,c:c+dc}, capture:true});
+          }
+        }
+        // en passant
+        if(enPassant && enPassant.r===r+dir && enPassant.c===c+dc){
+          moves.push({from:{r,c},to:{r:r+dir,c:c+dc}, enPass:true, capture:true});
+        }
+      }
+    }
+  } else if(p.t==='n'){
+    const kn=[[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
+    for(let [dr,dc] of kn){
+      let rr=r+dr, cc=c+dc;
+      if(inBoard(rr,cc)){
+        const t=board[rr][cc];
+        if(!t || t.c===opp) moves.push({from:{r,c},to:{r:rr,c:cc}, capture:!!t});
+      }
+    }
+  } else if(p.t==='b' || p.t==='r' || p.t==='q'){
+    const dirs=[];
+    if(p.t==='b' || p.t==='q') dirs.push(...[[-1,-1],[-1,1],[1,-1],[1,1]]);
+    if(p.t==='r' || p.t==='q') dirs.push(...[[-1,0],[1,0],[0,-1],[0,1]]);
+    for(let [dr,dc] of dirs){
+      for(let d=1; d<8; d++){
+        let rr=r+dr*d, cc=c+dc*d;
+        if(!inBoard(rr,cc)) break;
+        const t=board[rr][cc];
+        if(!t){ moves.push({from:{r,c},to:{r:rr,c:cc}}); }
+        else{
+          if(t.c===opp) moves.push({from:{r,c},to:{r:rr,c:cc}, capture:true});
+          break;
+        }
+      }
+    }
+  } else if(p.t==='k'){
+    for(let dr=-1; dr<=1; dr++) for(let dc=-1; dc<=1; dc++){
+      if(dr===0&&dc===0) continue;
+      let rr=r+dr, cc=c+dc;
+      if(inBoard(rr,cc)){
+        const t=board[rr][cc];
+        if(!t || t.c===opp) moves.push({from:{r,c},to:{r:rr,c:cc}, capture:!!t});
+      }
+    }
+    // castling (simplified)
+    if(color==='w' && r===7 && c===4){
+      if(castling.wK && !board[7][5] && !board[7][6] && board[7][7] && board[7][7].t==='r' && !isAttacked(7,4,'b') && !isAttacked(7,5,'b') && !isAttacked(7,6,'b')){
+        moves.push({from:{r,c},to:{r:7,c:6}, castle:'K'});
+      }
+      if(castling.wQ && !board[7][1] && !board[7][2] && !board[7][3] && board[7][0] && board[7][0].t==='r' && !isAttacked(7,4,'b') && !isAttacked(7,3,'b') && !isAttacked(7,2,'b')){
+        moves.push({from:{r,c},to:{r:7,c:2}, castle:'Q'});
+      }
+    }
+    if(color==='b' && r===0 && c===4){
+      if(castling.bK && !board[0][5] && !board[0][6] && board[0][7] && board[0][7].t==='r' && !isAttacked(0,4,'w') && !isAttacked(0,5,'w') && !isAttacked(0,6,'w')){
+        moves.push({from:{r,c},to:{r:0,c:6}, castle:'K'});
+      }
+      if(castling.bQ && !board[0][1] && !board[0][2] && !board[0][3] && board[0][0] && board[0][0].t==='r' && !isAttacked(0,4,'w') && !isAttacked(0,3,'w') && !isAttacked(0,2,'w')){
+        moves.push({from:{r,c},to:{r:0,c:2}, castle:'Q'});
+      }
+    }
+  }
+  return moves;
+}
+
+function genLegalMoves(color){
+  const all=[];
+  for(let r=0;r<8;r++) for(let c=0;c<8;c++){
+    const p=board[r][c];
+    if(p && p.c===color){
+      const pseudo=genPseudoMoves(r,c);
+      for(let m of pseudo){
+        // simulate
+        const backup = doMove(m, true);
+        const kPos=findKing(color);
+        const inCheck = kPos ? isAttacked(kPos.r, kPos.c, color==='w'?'b':'w') : false;
+        undoMove(backup);
+        if(!inCheck) all.push(m);
+      }
+    }
+  }
+  return all;
+}
+
+function doMove(m, test=false){
+  const backup={
+    board: board.map(row=>row.map(p=>p?{...p}:null)),
+    castling:{...castling},
+    enPassant: enPassant?{...enPassant}:null,
+    turn: turn,
+    captured: null
+  };
+  const {from,to} = m;
+  const piece=board[from.r][from.c];
+  const target=board[to.r][to.c];
+  backup.captured=target;
+  
+  // en passant capture
+  if(m.enPass){
+    const capR = from.r;
+    const capC = to.c;
+    backup.captured=board[capR][capC];
+    board[capR][capC]=null;
+  }
+  
+  // move piece
+  board[to.r][to.c]=piece;
+  board[from.r][from.c]=null;
+  
+  // promotion
+  if(m.promo){
+    board[to.r][to.c]={t:m.promo, c:piece.c};
+  }
+  
+  // castling rook
+  if(m.castle){
+    if(m.castle==='K'){
+      const r=from.r;
+      board[r][5]=board[r][7];
+      board[r][7]=null;
+    }else{
+      const r=from.r;
+      board[r][3]=board[r][0];
+      board[r][0]=null;
+    }
+  }
+  
+  // update castling rights
+  if(piece.t==='k'){
+    if(piece.c==='w'){ castling.wK=false; castling.wQ=false; }
+    else{ castling.bK=false; castling.bQ=false; }
+  }
+  if(piece.t==='r'){
+    if(from.r===7 && from.c===0) castling.wQ=false;
+    if(from.r===7 && from.c===7) castling.wK=false;
+    if(from.r===0 && from.c===0) castling.bQ=false;
+    if(from.r===0 && from.c===7) castling.bK=false;
+  }
+  if(target && target.t==='r'){
+    if(to.r===7 && to.c===0) castling.wQ=false;
+    if(to.r===7 && to.c===7) castling.wK=false;
+    if(to.r===0 && to.c===0) castling.bQ=false;
+    if(to.r===0 && to.c===7) castling.bK=false;
+  }
+  
+  // en passant
+  enPassant=null;
+  if(piece.t==='p' && Math.abs(from.r-to.r)===2){
+    enPassant={r:(from.r+to.r)/2, c:from.c};
+  }
+  
+  if(!test){
+    if(!isRedoing) redoStack=[];
+    undoStack.push(backup);
+    turn = turn==='w'?'b':'w';
+    history.push(m);
+    // algebraic for log
+    const alg = FILES[from.c]+(8-from.r)+FILES[to.c]+(8-to.r)+(m.promo||'');
+    moveHistory.push(alg);
+    const key = positionKey();
+    repetitionCounts.set(key, (repetitionCounts.get(key)||0)+1);
+  }
+  
+  return backup;
+}
+
+function undoMove(backup){
+  board=backup.board;
+  castling=backup.castling;
+  enPassant=backup.enPassant;
+  turn=backup.turn;
+}
+
+function evaluate(){
+  let score=0;
+  const center = (r,c) => 7 - (Math.abs(3.5-r) + Math.abs(3.5-c));
+  for(let r=0;r<8;r++) for(let c=0;c<8;c++){
+    const p=board[r][c];
+    if(!p) continue;
+    let v=PIECES[p.t]||0;
+    const advance = p.c==='w' ? (6-r) : (r-1);
+    if(p.t==='p'){
+      v += advance*10;
+      v += Math.round(center(r,c)*3);
+      if((p.c==='w' && r===1)||(p.c==='b' && r===6)) v += 12;
+    }
+    if(p.t==='n') v += Math.round(center(r,c)*10);
+    if(p.t==='b') v += Math.round(center(r,c)*6);
+    if(p.t==='r' && ((p.c==='w' && r===1)||(p.c==='b' && r===6))) v += 12;
+    if(p.t==='q') v += Math.round(center(r,c)*2);
+    if(p.t==='k'){
+      // Prefer king safety early; the simple engine does not model a full endgame king table.
+      const piecesRemain = board.flat().filter(x=>x && x.t!=='k' && x.t!=='p').length;
+      if(piecesRemain>4 && (c===2||c===6)) v+=18;
+      if(piecesRemain<=4) v+=Math.round(center(r,c)*8);
+    }
+    score += p.c==='w' ? v : -v;
+  }
+  const wk=findKing('w'), bk=findKing('b');
+  if(wk && isAttacked(wk.r,wk.c,'b')) score-=45;
+  if(bk && isAttacked(bk.r,bk.c,'w')) score+=45;
+  return score;
+}
+
+function moveOrderScore(m){
+  const attacker=board[m.from.r][m.from.c];
+  const victim=board[m.to.r][m.to.c];
+  let score=0;
+  if(m.capture && victim && attacker) score += 10000 + (PIECES[victim.t]||0)*10 - (PIECES[attacker.t]||0);
+  if(m.enPass) score += 10000 + 1000;
+  if(m.promo) score += 8000 + (PIECES[m.promo]||0);
+  if(m.castle) score += 80;
+  return score;
+}
+
+let searchDeadline = Infinity;
+const SEARCH_TIMEOUT = {timeout:true};
+function checkSearchTime(){ if(Date.now() >= searchDeadline) throw SEARCH_TIMEOUT; }
+
+function quiescence(alpha,beta,side,remaining=4){
+  checkSearchTime();
+  const standPat=evaluate();
+  if(side==='w'){
+    if(standPat>=beta) return beta;
+    alpha=Math.max(alpha,standPat);
+  }else{
+    if(standPat<=alpha) return alpha;
+    beta=Math.min(beta,standPat);
+  }
+  if(remaining<=0) return standPat;
+  let captures=[];
+  for(let r=0;r<8;r++) for(let c=0;c<8;c++){
+    const p=board[r][c];
+    if(p && p.c===side){
+      for(const m of genPseudoMoves(r,c)){
+        if(!m.capture && !m.enPass && !m.promo) continue;
+        const bak=doMove(m,true);
+        const kp=findKing(side);
+        const bad=kp && isAttacked(kp.r,kp.c,side==='w'?'b':'w');
+        undoMove(bak);
+        if(!bad) captures.push(m);
+      }
+    }
+  }
+  captures.sort((a,b)=>moveOrderScore(b)-moveOrderScore(a));
+  for(const m of captures){
+    checkSearchTime();
+    const bak=doMove(m,true);
+    const next=side==='w'?'b':'w';
+    let val;
+    try { val=quiescence(alpha,beta,next,remaining-1); } finally { undoMove(bak); }
+    if(side==='w'){
+      if(val>=beta) return beta;
+      alpha=Math.max(alpha,val);
+    }else{
+      if(val<=alpha) return alpha;
+      beta=Math.min(beta,val);
+    }
+  }
+  return side==='w'?alpha:beta;
+}
+
+function minimax(depth, alpha, beta, maxing){
+  checkSearchTime();
+  const color=maxing?'w':'b';
+  if(depth===0) return quiescence(alpha,beta,color,3);
+  const moves=genLegalMoves(color);
+  if(moves.length===0){
+    const k=findKing(color);
+    const check=k?isAttacked(k.r,k.c,color==='w'?'b':'w'):false;
+    if(check) return maxing?-20000:20000;
+    return 0;
+  }
+  moves.sort((a,b)=>moveOrderScore(b)-moveOrderScore(a));
+  if(maxing){
+    let best=-Infinity;
+    for(const m of moves){
+      checkSearchTime();
+      const bak=doMove(m,true);
+      let val;
+      try { val=minimax(depth-1,alpha,beta,false); } finally { undoMove(bak); }
+      best=Math.max(best,val);
+      alpha=Math.max(alpha,val);
+      if(beta<=alpha) break;
+    }
+    return best;
+  }else{
+    let best=Infinity;
+    for(const m of moves){
+      checkSearchTime();
+      const bak=doMove(m,true);
+      let val;
+      try { val=minimax(depth-1,alpha,beta,true); } finally { undoMove(bak); }
+      best=Math.min(best,val);
+      beta=Math.min(beta,val);
+      if(beta<=alpha) break;
+    }
+    return best;
+  }
+}
+
+function getBestMove(depth, blunder, thinkMs=3000){
+  const moves=genLegalMoves(turn);
+  if(moves.length===0) return null;
+  if(blunder>0 && Math.random()<blunder){
+    log("Pemula blunder - jalan random");
+    return moves[Math.floor(Math.random()*moves.length)];
+  }
+  // Iterative deepening: hanya menyimpan langkah dari kedalaman yang selesai penuh.
+  const rootTurn=turn;
+  let best=moves[0], bestVal= rootTurn==='w' ? -Infinity : Infinity;
+  let completedDepth=0, nodesLabel='';
+  searchDeadline=Date.now()+Math.max(500,thinkMs);
+  moves.sort((a,b)=>(moveOrderScore(b)-moveOrderScore(a)));
+  for(let d=1; d<=depth; d++){
+    let iterationBest=null;
+    let iterationVal=rootTurn==='w'?-Infinity:Infinity;
+    try {
+      for(const m of moves){
+        checkSearchTime();
+        const bak=doMove(m,true);
+        const prevTurn=turn;
+        turn=turn==='w'?'b':'w';
+        let val;
+        try { val=minimax(d-1,-Infinity,Infinity,turn==='w'); }
+        finally { turn=prevTurn; undoMove(bak); }
+        if(rootTurn==='w' ? val>iterationVal : val<iterationVal){ iterationVal=val; iterationBest=m; }
+      }
+      if(iterationBest){ best=iterationBest; bestVal=iterationVal; completedDepth=d; }
+      if(d>=depth) break;
+    } catch(e){
+      if(e!==SEARCH_TIMEOUT) throw e;
+      break;
+    }
+  }
+  searchDeadline=Infinity;
+  const moveText=best?FILES[best.from.c]+(8-best.from.r)+FILES[best.to.c]+(8-best.to.r):"null";
+  log("Evaluasi terbaik: "+bestVal+" • kedalaman selesai "+completedDepth+" / target "+depth);
+  document.getElementById("eval").textContent="Eval: "+(bestVal/100).toFixed(2);
+  document.getElementById("stat").textContent="Langkah "+moveText+" • depth selesai "+completedDepth+" / target "+depth+" • waktu terbatas";
+  return best;
+}
+
+// ===== UI =====
+function render(){
+  const bEl=document.getElementById("board");
+  bEl.innerHTML="";
+  const last = history.length?history[history.length-1]:null;
+  for(let r=0;r<8;r++){
+    for(let c=0;c<8;c++){
+      let rr=flipped?7-r:r;
+      let cc=flipped?7-c:c;
+      const sq=board[rr][cc];
+      const isLight=(rr+cc)%2===0;
+      const div=document.createElement("div");
+      div.className="sq "+(isLight?"light":"dark");
+      const alg=FILES[cc]+(8-rr);
+      if(selected && selected.r===rr && selected.c===cc) div.classList.add("sel");
+      if(last && ((last.from.r===rr&&last.from.c===cc)||(last.to.r===rr&&last.to.c===cc))) div.classList.add("last");
+      const wk=findKing(turn);
+      if(wk && wk.r===rr && wk.c===cc && isAttacked(rr,cc,turn==='w'?'b':'w')) div.classList.add("check");
+      
+      if(legalMoves.find(m=>m.to.r===rr && m.to.c===cc)){
+        if(sq) div.innerHTML+=`<div class="cap"></div>`;
+        else div.innerHTML+=`<div class="dot"></div>`;
+      }
+      
+      if(sq){
+        const span=document.createElement("div");
+        span.className="piece "+(sq.c==='w'?'w':'b');
+        const map={k:'♔',q:'♕',r:'♖',b:'♗',n:'♘',p:'♙'};
+        const mapB={k:'♚',q:'♛',r:'♜',b:'♝',n:'♞',p:'♟'};
+        span.textContent = sq.c==='w' ? map[sq.t] : mapB[sq.t];
+        div.appendChild(span);
+      }
+      
+      // coords
+      if(cc===7) {
+        const cr=document.createElement("div");
+        cr.className="coord file";
+        cr.textContent=8-rr;
+        div.appendChild(cr);
+      }
+      if(rr===7){
+        const cf=document.createElement("div");
+        cf.className="coord rank";
+        cf.textContent=FILES[cc];
+        div.appendChild(cf);
+      }
+      
+      div.onclick=()=>clickSq(rr,cc);
+      bEl.appendChild(div);
+    }
+  }
+  bEl.style.pointerEvents=thinking?"none":"auto";
+  bEl.style.opacity=thinking?"0.6":"1";
+}
+
+function clickSq(r,c){
+  if(gameOver || thinking || tournamentStopped || tournamentMode==='match') return;
+  if(turn!==playerColor) return;
+  const p=board[r][c];
+  if(p && p.c===playerColor){
+    selected={r,c};
+    const pseudo=genPseudoMoves(r,c);
+    // filter legal
+    legalMoves=[];
+    for(let m of pseudo){
+      const bak=doMove(m,true);
+      const kp=findKing(playerColor);
+      const bad=kp && isAttacked(kp.r,kp.c, playerColor==='w'?'b':'w');
+      undoMove(bak);
+      if(!bad) legalMoves.push(m);
+    }
+    render();
+    return;
+  }
+  if(selected){
+    const mv=legalMoves.find(m=>m.to.r===r && m.to.c===c);
+    if(mv){
+      // promotion
+      if(mv.promo && !['q','r','b','n'].includes(mv.promo)) mv.promo='q';
+      doMove(mv,false);
+      log("Kamu jalan: "+FILES[mv.from.c]+(8-mv.from.r)+FILES[mv.to.c]+(8-mv.to.r));
+      selected=null; legalMoves=[];
+      render();
+      if(checkGameOver()) return;
+      if(pendingEngineTimer!==null) clearTimeout(pendingEngineTimer);
+      pendingEngineTimer=setTimeout(()=>{pendingEngineTimer=null; triggerEngine();}, 300);
+      return;
+    }
+  }
+  selected=null; legalMoves=[]; render();
+}
+
+function triggerEngine(){
+  if(gameOver || thinking || tournamentStopped) return;
+  if(tournamentMode==='human'){
+    if(turn!==playerColor) triggerStockfishMove();
+    return;
+  }
+  if(tournamentMode==='match'){
+    if(turn==='w') triggerLocalEngine(true); else triggerStockfishMove();
+    return;
+  }
+  triggerLocalEngine(false);
+}
+
+function triggerLocalEngine(isTournament=false){
+  if(gameOver || thinking || tournamentStopped) return;
+  if(tournamentMode!=='match' && turn===playerColor) return;
+  const legal=genLegalMoves(turn);
+  if(legal.length===0){ checkGameOver(); return; }
+  
+  const cfg=LEVELS[curLevel];
+  thinking=true;
+  document.getElementById("thinkOver").classList.remove("hidden");
+  document.getElementById("turn").textContent="MESIN BERPIKIR...";
+  document.getElementById("turn").className="status status-think";
+  document.getElementById("thinkTitle").textContent=cfg.name.toUpperCase()+" MIKIR...";
+  
+  let timeLeft=cfg.mt/1000;
+  const countEl=document.getElementById("countdown");
+  const progEl=document.getElementById("prog");
+  const subEl=document.getElementById("thinkSub");
+  subEl.innerHTML=`${cfg.desc}<br>Waktu berpikir minimum ${cfg.mt}ms • mesin lokal`;
+  
+  const int=setInterval(()=>{
+    timeLeft-=0.1;
+    if(timeLeft<0) timeLeft=0;
+    countEl.textContent=timeLeft.toFixed(1)+"s";
+    progEl.style.width=(timeLeft/(cfg.mt/1000)*100)+"%";
+  },100);
+  
+  setTimeout(()=>{
+    clearInterval(int);
+    const best=getBestMove(cfg.depth, cfg.blunder, cfg.name==="ULTIMATE 100" ? 10000 : Math.min(cfg.mt,3000));
+    if(best){
+      doMove(best,false);
+      log("Mesin jalan: "+FILES[best.from.c]+(8-best.from.r)+FILES[best.to.c]+(8-best.to.r)+" ("+cfg.name+")");
+    }else{
+      log("Tidak ada langkah");
+    }
+    thinking=false;
+    document.getElementById("thinkOver").classList.add("hidden");
+    document.getElementById("turn").innerHTML=tournamentMode==='match'?'PERTANDINGAN MESIN BERJALAN':`<span style="width:8px;height:8px;background:#10b981;border-radius:50%;display:inline-block"></span> GILIRAN ANDA`;
+    document.getElementById("turn").className=tournamentMode==='match'?'status status-think':'status status-you';
+    render();
+    if(!checkGameOver() && tournamentMode==='match' && !tournamentStopped) setTimeout(triggerEngine,180);
+  }, cfg.mt);
+}
+
+function recordMatchResult(result){
+  if(tournamentMode!=='match') return;
+  matchStats.games++;
+  if(result==='w') matchStats.w++; else if(result==='l') matchStats.l++; else matchStats.d++;
+  setSFStatus('Skor uji mesin — Abi Chess menang '+matchStats.w+' • remis '+matchStats.d+' • kalah '+matchStats.l+' • partai '+matchStats.games, '#34d399');
+}
+
+function checkGameOver(){
+  if(gameOver) return true;
+  const moves=genLegalMoves(turn);
+  if(moves.length===0){
+    const k=findKing(turn);
+    const inCheck=k?isAttacked(k.r,k.c,turn==='w'?'b':'w'):false;
+    gameOver = true;
+    if(inCheck){
+      const winner=turn==='w'?'Hitam':'Putih';
+      if(tournamentMode==='match') recordMatchResult(turn==='w'?'l':'w');
+      setTimeout(()=>alert("Skakmat! "+winner+" menang!"),100);
+    }else{
+      if(tournamentMode==='match') recordMatchResult('d');
+      setTimeout(()=>alert("Stalemate - Remis! Tidak ada langkah legal dan raja tidak sedang skak."),100);
+    }
+    return true;
+  }
+  const key = positionKey();
+  if((repetitionCounts.get(key)||0) >= 3){
+    gameOver = true;
+    if(tournamentMode==='match') recordMatchResult('d');
+    setTimeout(()=>alert('Remis! Posisi yang sama terulang 3 kali.'),100);
+    log('Remis otomatis: posisi yang sama terulang 3 kali.');
+    return true;
+  }
+  return false;
+}
+
+function newGame(){
+  if(pendingEngineTimer!==null){clearTimeout(pendingEngineTimer); pendingEngineTimer=null;}
+  gameOver = false;
+  initBoard();
+  selected=null; legalMoves=[]; thinking=false;
+  document.getElementById("thinkOver").classList.add("hidden");
+  document.getElementById("turn").innerHTML=`<span style="width:8px;height:8px;background:#10b981;border-radius:50%;display:inline-block"></span> GILIRAN ANDA`;
+  document.getElementById("turn").className="status status-you";
+  tournamentStopped=false;
+  log("Permainan baru • mode: "+(tournamentMode==='local'?'Abi Chess lokal':tournamentMode==='human'?'Anda vs Stockfish 19':'Abi Chess vs Stockfish 19')+" • warna Anda "+(playerColor==='w'?"Putih":"Hitam"));
+  render();
+  if(tournamentMode==='match') setTimeout(()=>triggerEngine(),500);
+  else if(tournamentMode==='human' && playerColor==='b') setTimeout(()=>triggerEngine(),600);
+  else if(tournamentMode==='local' && playerColor==='b') setTimeout(()=>triggerEngine(),600);
+}
+
+function undo(){
+  if(thinking) return;
+  gameOver = false;
+  if(pendingEngineTimer!==null){clearTimeout(pendingEngineTimer); pendingEngineTimer=null;}
+  if(history.length===0){ log('Belum ada langkah untuk di-undo.'); return; }
+
+  // Satu tekan membatalkan satu giliran lengkap: balasan mesin + langkah pemain.
+  // Jika mesin belum sempat membalas, batalkan satu langkah terakhir saja.
+  let count = (turn===playerColor && history.length>=2) ? 2 : 1;
+  while(count-- > 0 && undoStack.length){
+    const currentKey = positionKey();
+    const n = repetitionCounts.get(currentKey)||0;
+    if(n<=1) repetitionCounts.delete(currentKey); else repetitionCounts.set(currentKey,n-1);
+    const undoneMove = history[history.length-1];
+    const backup = undoStack.pop();
+    history.pop();
+    moveHistory.pop();
+    if(undoneMove) redoStack.push({...undoneMove, from:{...undoneMove.from}, to:{...undoneMove.to}});
+    undoMove(backup);
+  }
+  selected=null; legalMoves=[];
+  document.getElementById('thinkOver').classList.add('hidden');
+  document.getElementById('turn').innerHTML=`<span style="width:8px;height:8px;background:#10b981;border-radius:50%;display:inline-block"></span> GILIRAN ANDA`;
+  document.getElementById('turn').className='status status-you';
+  render();
+  log('Undo berhasil: langkah terakhir dikembalikan.');
+  if(tournamentMode==='match' && !tournamentStopped) setTimeout(triggerEngine,250);
+}
+
+function redo(){
+  if(thinking) return;
+  if(pendingEngineTimer!==null){clearTimeout(pendingEngineTimer); pendingEngineTimer=null;}
+  if(redoStack.length===0){ log('Tidak ada langkah yang bisa di-Redo.'); return; }
+  gameOver=false;
+  // Selaraskan dengan Undo: pulihkan satu langkah atau satu giliran lengkap.
+  const count = Math.min(redoStack.length, (turn===playerColor && redoStack.length>=2) ? 2 : 1);
+  isRedoing=true;
+  try{
+    for(let i=0;i<count;i++){
+      const m=redoStack.pop();
+      doMove(m,false);
+    }
+  } finally {
+    isRedoing=false;
+  }
+  selected=null; legalMoves=[];
+  document.getElementById('thinkOver').classList.add('hidden');
+  render();
+  log('Redo berhasil: '+count+' langkah dimajukan.');
+  if(checkGameOver()) return;
+  // Jangan langsung memicu mesin; beri kesempatan pengguna melihat posisi hasil Redo.
+}
+
+function flip(){ flipped=!flipped; render(); }
+
+function setColor(c){
+  playerColor=c;
+  document.getElementById("cw").className=c==='w'?"color-btn active":"color-btn";
+  document.getElementById("cb").className=c==='b'?"color-btn active":"color-btn";
+  newGame();
+}
+
+// ===== STOCKFISH 19 TOURNAMENT ADAPTER (WASM via CDN) =====
+function setSFStatus(text, color='#fbbf24'){
+  const el=document.getElementById('sfStatus'); if(el){el.textContent=text;el.style.color=color;}
+}
+function changeTournamentMode(mode){
+  tournamentMode=mode;
+  tournamentStopped=false;
+  const localPanel=document.getElementById('levels');
+  if(localPanel) localPanel.style.opacity=mode==='human'?'0.45':'1';
+  if(mode==='human') setSFStatus('Mode Anda vs Stockfish 19. Pilih warna, lalu tekan Mulai pertandingan.');
+  else if(mode==='match') setSFStatus('Mode mesin otomatis: Abi Chess putih melawan Stockfish hitam. Tekan Mulai pertandingan.');
+  else setSFStatus('Mode lokal: Catur Pro bermain melawan Anda.');
+  newGame();
+}
+function changeStockfishBuild(build){
+  if(stockfishBusy){setSFStatus('Hentikan pertandingan sebelum mengganti build Stockfish.', '#f87171');document.getElementById('sfBuild').value=stockfishBuild;return;}
+  stockfishBuild=build;
+  if(stockfishWorker){try{stockfishWorker.terminate();}catch(e){} stockfishWorker=null;}
+  stockfishReady=false;
+  setSFStatus(build==='full'?'Stockfish 19 Full dipilih. Unduhan sekitar 94 MB; tidak disarankan untuk HP dengan memori terbatas.':'Stockfish 19 Lite dipilih. Lebih ringan untuk HP.');
+}
+function ensureStockfish(){
+  return new Promise((resolve,reject)=>{
+    if(stockfishWorker && stockfishReady){resolve();return;}
+    if(stockfishPending){stockfishPending.push({resolve,reject});return;}
+    stockfishPending=[{resolve,reject}];
+    const base='https://cdn.jsdelivr.net/npm/stockfish@19.0.0/bin/';
+    const file=stockfishBuild==='full'?'stockfish-19-single.js':'stockfish-19-lite-single.js';
+    const wasm=stockfishBuild==='full'?'stockfish-19-single.wasm':'stockfish-19-lite-single.wasm';
+    let settled=false;
+    const loadTimer=setTimeout(()=>{
+      if(settled || stockfishReady) return;
+      settled=true;
+      const err=new Error('Waktu pemuatan Stockfish 19 habis. Periksa internet/CDN lalu tekan Mulai pertandingan lagi.');
+      const waiters=stockfishPending||[];stockfishPending=null;waiters.forEach(w=>w.reject(err));
+      setSFStatus(err.message,'#f87171');
+      if(stockfishWorker){try{stockfishWorker.terminate();}catch(e){} stockfishWorker=null;}
+      stockfishReady=false;
+    },45000);
+    setSFStatus('Memuat Stockfish 19 '+(stockfishBuild==='full'?'Full':'Lite')+' dari CDN. Perlu internet; tunggu sampai siap…');
+    try{
+      // Worker Blob mendukung file HTML lokal; locateFile diarahkan eksplisit ke WASM yang cocok.
+      const code=`self.Module={locateFile:function(path){return path.endsWith('.wasm')?'${base}${wasm}':'${base}'+path;}}; importScripts('${base}${file}');`;
+      const blob=new Blob([code],{type:'text/javascript'});
+      const workerUrl=URL.createObjectURL(blob);
+      stockfishWorker=new Worker(workerUrl);
+      stockfishWorker.onmessage=(ev)=>{
+        const line=String(ev.data||'').trim();
+        if(line==='uciok') stockfishWorker.postMessage('isready');
+        if(line==='readyok'){
+          stockfishReady=true; settled=true; clearTimeout(loadTimer);
+          const waiters=stockfishPending||[];stockfishPending=null;
+          setSFStatus('Stockfish 19 '+(stockfishBuild==='full'?'Full':'Lite')+' siap. Engine berjalan di browser.', '#34d399');
+          waiters.forEach(w=>w.resolve());
+        }
+        if(line.startsWith('info ')){
+          const dm=line.match(/\bdepth (\d+)/); const sc=line.match(/\bscore (cp|mate) (-?\d+)/);
+          if(dm){stockfishLastInfo='Depth '+dm[1]+(sc?' • '+(sc[1]==='mate'?'mate '+sc[2]:(Number(sc[2])/100).toFixed(2)+' pawn'):'');
+            const st=document.getElementById('stat'); if(st && stockfishBusy) st.textContent='Stockfish 19 sedang berpikir: '+stockfishLastInfo;}
+        }
+        if(line.startsWith('bestmove ')){
+          const uci=line.split(/\s+/)[1];
+          if(stockfishMoveResolve){const fn=stockfishMoveResolve;stockfishMoveResolve=null;fn(uci);}
+        }
+        if(line.includes('error')||line.includes('ERROR')) setSFStatus('Pesan engine: '+line,'#f87171');
+      };
+      stockfishWorker.onerror=(e)=>{
+        clearTimeout(loadTimer); settled=true;
+        const err=new Error('Stockfish 19 gagal dimuat. Pastikan internet aktif, lalu coba build Lite di Chrome. '+(e.message||''));
+        const waiters=stockfishPending||[];stockfishPending=null;waiters.forEach(w=>w.reject(err));
+        try{if(stockfishWorker) stockfishWorker.terminate();}catch(_e){}
+        stockfishWorker=null; stockfishReady=false;
+        setSFStatus(err.message,'#f87171');
+      };
+      stockfishWorker.postMessage('uci');
+    }catch(err){
+      clearTimeout(loadTimer); settled=true;
+      const waiters=stockfishPending||[];stockfishPending=null;waiters.forEach(w=>w.reject(err));
+      try{if(stockfishWorker) stockfishWorker.terminate();}catch(_e){}
+      stockfishWorker=null; stockfishReady=false;
+      setSFStatus('Gagal memulai Stockfish 19: '+err.message,'#f87171');
+    }
+  });
+}
+let stockfishMoveResolve=null;
+function getStockfishMove(){
+  return new Promise((resolve,reject)=>{
+    if(!stockfishWorker || !stockfishReady){reject(new Error('Stockfish belum siap'));return;}
+    let finished=false;
+    const timer=setTimeout(()=>{
+      if(finished) return;
+      finished=true; stockfishMoveResolve=null;
+      try{stockfishWorker.postMessage('stop');}catch(e){}
+      reject(new Error('Stockfish 19 tidak mengirim langkah tepat waktu. Coba build Lite atau tekan Hentikan lalu Mulai pertandingan lagi.'));
+    },30000);
+    stockfishMoveResolve=(uci)=>{if(finished)return;finished=true;clearTimeout(timer);resolve(uci);};
+    const moves=moveHistory.join(' ');
+    try{
+      stockfishWorker.postMessage('position startpos'+(moves?' moves '+moves:''));
+      stockfishWorker.postMessage('go movetime '+(stockfishBuild==='full'?2500:1200));
+    }catch(err){clearTimeout(timer);finished=true;stockfishMoveResolve=null;reject(err);}
+  });
+}
+async function triggerStockfishMove(){
+  if(gameOver||thinking||tournamentStopped||stockfishBusy) return;
+  if(tournamentMode==='human' && turn===playerColor) return;
+  if(tournamentMode==='match' && turn!=='b') return;
+  thinking=true;stockfishBusy=true;
+  document.getElementById('thinkOver').classList.remove('hidden');
+  document.getElementById('thinkTitle').textContent='STOCKFISH 19 BERPIKIR…';
+  document.getElementById('thinkSub').innerHTML='Stockfish 19 '+(stockfishBuild==='full'?'Full':'Lite')+' • WASM';
+  document.getElementById('countdown').textContent='…';
+  document.getElementById('turn').textContent='STOCKFISH BERPIKIR…';
+  document.getElementById('turn').className='status status-think';
+  render();
+  try{
+    await ensureStockfish();
+    if(tournamentStopped){thinking=false;stockfishBusy=false;document.getElementById('thinkOver').classList.add('hidden');render();return;}
+    const uci=await getStockfishMove();
+    if(!uci || uci==='(none)' || uci==='0000'){
+      thinking=false;stockfishBusy=false;document.getElementById('thinkOver').classList.add('hidden');
+      checkGameOver();render();return;
+    }
+    const from={c:FILES.indexOf(uci[0]),r:8-Number(uci[1])};
+    const to={c:FILES.indexOf(uci[2]),r:8-Number(uci[3])};
+    const promo=uci.length>4?uci[4]:undefined;
+    const legal=genLegalMoves(turn);
+    const mv=legal.find(m=>m.from.r===from.r&&m.from.c===from.c&&m.to.r===to.r&&m.to.c===to.c&&((m.promo||'')===(promo||''))) || legal.find(m=>m.from.r===from.r&&m.from.c===from.c&&m.to.r===to.r&&m.to.c===to.c);
+    if(!mv) throw new Error('Langkah Stockfish ('+uci+') tidak cocok dengan langkah legal papan.');
+    doMove(mv,false);
+    log('Stockfish 19 jalan: '+uci+(stockfishLastInfo?' • '+stockfishLastInfo:''));
+    document.getElementById('eval').textContent='SF19 '+(stockfishLastInfo||'');
+  }catch(err){
+    log('Stockfish error: '+err.message);
+    setSFStatus('Tidak dapat menjalankan Stockfish. Coba buka file di Chrome dengan internet aktif. '+err.message,'#f87171');
+    tournamentStopped=true;
+  }finally{
+    thinking=false;stockfishBusy=false;
+    document.getElementById('thinkOver').classList.add('hidden');
+    render();
+    if(!tournamentStopped && !checkGameOver()){
+      if(tournamentMode==='match') setTimeout(triggerEngine,220);
+      else {document.getElementById('turn').innerHTML='<span style="width:8px;height:8px;background:#10b981;border-radius:50%;display:inline-block"></span> GILIRAN ANDA';document.getElementById('turn').className='status status-you';}
+    }
+  }
+}
+async function startTournamentMatch(){
+  tournamentStopped=false;
+  const mode=document.getElementById('playMode').value;
+  tournamentMode=mode;
+  if(mode==='local'){
+    newGame();setSFStatus('Mode lokal aktif. Pilih “Anda vs Stockfish 19” atau mode otomatis untuk memakai Stockfish.');return;
+  }
+  try{await ensureStockfish();}
+  catch(e){return;}
+  if(mode==='match'){
+    playerColor='w';document.getElementById('cw').className='color-btn active';document.getElementById('cb').className='color-btn';
+    newGame();
+    setSFStatus('Pertandingan otomatis aktif: Abi Chess = Putih, Stockfish 19 = Hitam. Langkah akan berjalan bergantian otomatis.','#34d399');
+    document.getElementById('turn').textContent='ABI CHESS BERPIKIR…';
+  }else{
+    newGame();setSFStatus('Pertandingan siap. Anda bermain sebagai '+(playerColor==='w'?'Putih':'Hitam')+' melawan Stockfish 19.','#34d399');
+  }
+}
+function stopTournamentMatch(){
+  tournamentStopped=true;
+  if(pendingEngineTimer!==null){clearTimeout(pendingEngineTimer);pendingEngineTimer=null;}
+  if(stockfishWorker && stockfishBusy){try{stockfishWorker.postMessage('stop');}catch(e){}}
+  stockfishBusy=false;thinking=false;
+  document.getElementById('thinkOver').classList.add('hidden');
+  render();setSFStatus('Pertandingan dihentikan. Tekan Mulai pertandingan untuk melanjutkan atau mulai ulang.','#fbbf24');
+}
+
+function renderLevels(){
+  const el=document.getElementById("levels");
+  el.innerHTML="";
+  LEVELS.forEach((lvl,i)=>{
+    const d=document.createElement("div");
+    d.className="level"+(i===curLevel?" active":"");
+    d.innerHTML=`<div><div class="level-name">${lvl.name} ${i===curLevel?'●':''}</div><div class="level-desc">${lvl.desc}</div></div><div class="level-time">${lvl.mt}ms</div>`;
+    d.onclick=()=>{ curLevel=i; renderLevels(); log("Ganti level: "+lvl.name+" target depth "+lvl.depth+" "+lvl.mt+"ms"); };
+    el.appendChild(d);
+  });
+}
+
+renderLevels();
+initBoard();
+render();
+log("Abi Chess siap. Pilih mode lokal, Anda vs Stockfish 19, atau Abi Chess vs Stockfish 19 otomatis.");
+</script>
+</body>
+</html>
